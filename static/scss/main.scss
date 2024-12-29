@@ -1,0 +1,57 @@
+@use 'variables';
+@use 'layout';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body.login-page {
+    background-color: #f8f9fa;
+}
+
+body.registration-page {
+    background-color: #f8f9fa;
+}
+
+// Shared styles for form containers
+.form-container {
+    max-width: 400px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-page {
+    .form-container {
+        .form-input-login {
+            margin-bottom: 5px;
+        }
+    }
+}
+
+// Registration page specific styles
+// .registration-page {
+//     .form-container {
+//         // Registration-specific styles here
+//     }
+// }
+
+form {
+    .form-label {
+        font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    button[type="submit"] {
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+}

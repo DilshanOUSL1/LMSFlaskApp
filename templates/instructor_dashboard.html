@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <!-- font_awsesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <!-- Optional: Include FullCalendar CSS and Recharts styling -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+    <style>
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+
+        a:link {
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-4">
+        <!-- header section -->
+        <header class="d-flex justify-content-between align-items-center mb-4" style="position: sticky; top: 0;
+    z-index: 1020;">
+            <div class=" d-flex align-items-center">
+                <img src="{{ url_for('static', filename='avatars/student.png') }}" alt="Student Avatar"
+                    class="rounded-circle me-3" width="64" height="64">
+                <div>
+                    <h1 class="h4 mb-0">Welcome, {{ user.username }}</h1>
+                    <!-- Uncomment if you want to show Student ID -->
+
+                </div>
+            </div>
+
+            <!-- Right side: Notifications & Profile Dropdown -->
+            <div class="d-flex align-items-center">
+                <!-- Notifications Button -->
+                <button class="btn btn-outline-secondary d-flex align-items-center me-2">
+                    <i class="bi bi-bell me-2"></i>
+                    <i class="fa-regular fa-bell" style="margin-right: 5px;"></i>
+                    Notifications
+                </button>
+                <button class="btn btn-outline-secondary d-flex align-items-center me-2">
+                    <i class="bi bi-bell me-2"></i>
+                    {% if user.role in ['admin', 'instructor'] %}
+                    <a href="{{ url_for('enrollment_bp.view_courses') }}">
+                        <i class="fa-solid fa-book" style="margin-right: 5px;"></i>
+                        View All Courses
+                    </a>
+                    {% endif %}
+
+                </button>
+
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button"
+                        id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle me-2"></i> My Profile
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <!-- Optional: Add other menu items, such as Profile Settings -->
+                        <li><a class="dropdown-item" href="#">Profile Settings</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <h1 class="text-center mb-4">Dashboard</h1>
+
+        <!-- Dashboard Overview -->
+        <div class="row">
+            <!-- Course Overview -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Course Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>CS101:</strong> Introduction to Computer Science - 150 students
+                            </li>
+                            <li class="list-group-item">
+                                <strong>CS201:</strong> Data Structures and Algorithms - 120 students
+                            </li>
+                            <li class="list-group-item">
+                                <strong>CS301:</strong> Web Development - 100 students
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics and Reports -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Analytics and Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="chart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Announcements -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Announcements</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="course" class="form-label">Select Course:</label>
+                        <select id="course" class="form-select">
+                            <option value="cs101">Introduction to Computer Science</option>
+                            <option value="cs201">Data Structures and Algorithms</option>
+                            <option value="cs301">Computer Architecture</option>
+                            <option value="cs401">Operating Systems</option>
+                            <option value="cs501">Compiler Design</option>
+                            <option value="cs601">Artificial Intelligence</option>
+                            <option value="cs701">Machine Learning</option>
+                            <option value="cs801">Database Systems</option>
+                            <option value="cs901">Network Security</option>
+                            <option value="cs1001">Embedded Systems</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" placeholder="Announcement Title">
+                    </div>
+                    <div class="mb-3">
+                        <textarea class="form-control" rows="3" placeholder="Announcement Content"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary">Post Announcement</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Discussion Forum -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Discussion Forum</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="course" class="form-label">Select Course:</label>
+                    <select id="course" class="form-select">
+                        <option value="cs101">Introduction to Computer Science</option>
+                        <option value="cs201">Data Structures and Algorithms</option>
+                        <option value="cs301">Computer Architecture</option>
+                        <option value="cs401">Operating Systems</option>
+                        <option value="cs501">Compiler Design</option>
+                        <option value="cs601">Artificial Intelligence</option>
+                        <option value="cs701">Machine Learning</option>
+                        <option value="cs801">Database Systems</option>
+                        <option value="cs901">Network Security</option>
+                        <option value="cs1001">Embedded Systems</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="New discussion topic">
+                </div>
+                <button type="button" class="btn btn-primary mb-3">Create</button>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Week 1 Discussion: Introduction
+                        <span class="badge bg-secondary">15 replies</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Project Ideas Brainstorming
+                        <span class="badge bg-secondary">23 replies</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Scheduled Classes -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Scheduled Classes</h5>
+            </div>
+            <div class="card-body">
+                <div id="calendar" class="calendar"></div>
+            </div>
+        </div>
+
+        <!-- Student List -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Student List</h5>
+            </div>
+            <div class="card-body">
+                <form class="d-flex pb-3" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Index No/ Name" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+                <!-- <div class="list-group">
+                    <div class="list-group-item d-flex align-items-center">
+                        <img src="/avatar1.png" alt="Alice Johnson" class="avatar me-3">
+                        <div>
+                            <p class="mb-0 fw-bold">Alice Johnson</p>
+                            <p class="mb-0 text-muted">alice@example.com</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <img src="/avatar2.png" alt="Bob Smith" class="avatar me-3">
+                        <div>
+                            <p class="mb-0 fw-bold">Bob Smith</p>
+                            <p class="mb-0 text-muted">bob@example.com</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <img src="/avatar3.png" alt="Charlie Brown" class="avatar me-3">
+                        <div>
+                            <p class="mb-0 fw-bold">Charlie Brown</p>
+                            <p class="mb-0 text-muted">charlie@example.com</p>
+                        </div>
+                    </div>
+        
+
+                </div> -->
+
+                <div class="table-responsive" id="student-table-container" style="max-height:200px; overflow-y: auto;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Index Number</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>
+                                    <!-- Link to student_bp's view_student route, passing student.id -->
+                                    <a href="{{ url_for('student_bp.view_student', student_id=student.id) }}">
+                                        {{ student.username }}
+                                    </a>
+                                </td>
+                                <td>{{ student.index_number }}</td>
+                                <td>{{ student.email }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if students|length == 0 %}
+                            <tr>
+                                <td colspan="3" class="text-center">No students found.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments and Grading -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Assignments and Grading</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Assignment Name</th>
+                            <th>Due Date</th>
+                            <th>Submitted</th>
+                            <th>Graded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Midterm Project</td>
+                            <td>2023-10-15</td>
+                            <td>120</td>
+                            <td>100</td>
+                            <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                        </tr>
+                        <tr>
+                            <td>Final Exam</td>
+                            <td>2023-12-01</td>
+                            <td>145</td>
+                            <td>0</td>
+                            <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize FullCalendar
+            const calendarEl = document.getElementById('calendar');
+            if (calendarEl) {
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                });
+                calendar.render();
+            }
+
+            // Initialize Select2 for the dropdown
+            const selectElement = document.getElementById('course');
+            if (selectElement) {
+                $(selectElement).select2({
+                    placeholder: "Search for a course...",
+                    allowClear: true
+                });
+            }
+
+            // const tableContainer = document.getElementById("student-table-container");
+            // const rows = document.querySelectorAll("#student-table-container tbody tr").length;
+
+            // if (rows > 4) {
+            //     tableContainer.style.maxHeight = "300px"; // Enable scrolling if more than 4 rows
+            //     tableContainer.style.overflowY = "scroll";
+            // } else {
+            //     tableContainer.style.maxHeight = "none"; // No scrolling for 4 or fewer rows
+            //     tableContainer.style.overflowY = "auto";
+            // }
+        });
+    </script>
+
+</body>
+
+</html>
